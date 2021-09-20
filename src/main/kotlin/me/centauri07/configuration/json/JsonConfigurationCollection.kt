@@ -50,6 +50,10 @@ open class JsonConfigurationCollection<E>: ConfigurationCollection<E> {
         load()
     }
 
+    override fun find(): Collection<Configuration<E>> {
+        return configuration.map { Configuration(it) }
+    }
+
     override fun find(key: String, value: Any): Collection<Configuration<E>> {
         val elements = mutableListOf<Configuration<E>>()
 
@@ -57,7 +61,7 @@ open class JsonConfigurationCollection<E>: ConfigurationCollection<E> {
             element!!::class.java.declaredFields.forEach { field ->
                 field.isAccessible = true
                 if (field.name == key && field.get(element) == value) {
-                    elements.add(Configuration<E>(element))
+                    elements.add(Configuration(element))
                 }
             }
         }
