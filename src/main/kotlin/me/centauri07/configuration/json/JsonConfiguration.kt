@@ -1,13 +1,13 @@
 package me.centauri07.configuration.json
 
 import com.google.gson.GsonBuilder
-import me.centauri07.configuration.Configuration
-import me.centauri07.configuration.ConfigurationCollection
+import com.google.gson.JsonObject
+import me.centauri07.configuration.ConfigurationFile
 import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
 
-open class JsonConfigurationCollection<E>: ConfigurationCollection<E> {
+open class JsonConfiguration<E>: ConfigurationFile<E> {
     constructor(parent: File, name: String, loadOnInit: Boolean) {
         file = File(parent, "$name.json")
         if (file.parentFile != null && !file.parentFile.exists()) file.parentFile.mkdirs()
@@ -23,10 +23,13 @@ open class JsonConfigurationCollection<E>: ConfigurationCollection<E> {
     private val gson = GsonBuilder().setPrettyPrinting().serializeNulls().create()
 
     private val file: File
-    private var configuration = mutableListOf<E>()
+
+    private var configuration: JsonObject = JsonObject()
+
+    fun getConfiguration(): JsonObject = configuration
 
     override fun create() {
-        configuration = mutableListOf()
+        configuration = JsonObject()
         save()
     }
 
@@ -48,40 +51,5 @@ open class JsonConfigurationCollection<E>: ConfigurationCollection<E> {
             create()
         }
         load()
-    }
-
-    override fun find(key: String, value: Any): Collection<Configuration<E>> {
-        val elements = mutableListOf<Configuration<E>>()
-
-        configuration.forEach { element ->
-            element!!::class.java.declaredFields.forEach { field ->
-                field.isAccessible = true
-                if (field.name == key && field.get(element) == value) {
-                    elements.add(Configuration<E>(element))
-                }
-            }
-        }
-
-        return elements
-    }
-
-    override fun insert(obj: E): E {
-        configuration.add(obj)
-        save()
-        return obj
-    }
-
-    override fun delete(obj: E): E {
-        configuration.remove(obj)
-        save()
-        return obj
-    }
-
-    override fun replace(old: E, new: E): E {
-        if (configuration.contains(old)) {
-            configuration.add(configuration.indexOf(old), new)
-            configuration.removeAt(configuration.indexOf(old) + 1)
-        }
-        return new
     }
 }

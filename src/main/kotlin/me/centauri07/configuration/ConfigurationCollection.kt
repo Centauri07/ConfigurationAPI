@@ -1,7 +1,7 @@
 package me.centauri07.configuration
 
-interface ConfigurationCollection<E>: Configuration<E> {
-    fun find(key: String, value: Any): Collection<E>
+interface ConfigurationCollection<E>: ConfigurationFile<E> {
+    fun find(key: String, value: Any): Collection<Configuration<E>>
     fun insert(obj: E): E
     fun delete(obj: E): E
     fun replace(old: E, new: E): E
