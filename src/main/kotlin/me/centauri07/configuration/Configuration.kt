@@ -1,10 +1,10 @@
 package me.centauri07.configuration
 
-open class Configuration<E>(private var src: E) {
-    fun getObject(): E = src
-
+open class Configuration<E>(val src: E) {
     fun get(key: String): Any? {
         for (field in src!!::class.java.declaredFields) {
+            field.isAccessible = true
+
             if (field.name == key) {
                 return field.get(src)
             }
