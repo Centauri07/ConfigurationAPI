@@ -24,9 +24,8 @@ open class JsonConfiguration<E>: ConfigurationFile<E> {
 
     private val file: File
 
-    private var configuration: JsonObject = JsonObject()
-
-    fun getConfiguration(): JsonObject = configuration
+    var configuration: JsonObject = JsonObject()
+        private set
 
     override fun create() {
         configuration = JsonObject()

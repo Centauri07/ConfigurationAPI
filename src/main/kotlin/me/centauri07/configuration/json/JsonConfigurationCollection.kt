@@ -1,13 +1,15 @@
 package me.centauri07.configuration.json
 
 import com.google.gson.GsonBuilder
-import me.centauri07.configuration.Configuration
+import com.google.gson.reflect.TypeToken
 import me.centauri07.configuration.ConfigurationCollection
 import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
 
-open class JsonConfigurationCollection<E>: ConfigurationCollection<E> {
+data class Model<T> (var model: MutableList<T>)
+
+open class JsonConfigurationCollection<T>: ConfigurationCollection<T> {
     constructor(parent: File, name: String, loadOnInit: Boolean) {
         file = File(parent, "$name.json")
         if (file.parentFile != null && !file.parentFile.exists()) file.parentFile.mkdirs()
@@ -22,17 +24,20 @@ open class JsonConfigurationCollection<E>: ConfigurationCollection<E> {
 
     private val gson = GsonBuilder().setPrettyPrinting().serializeNulls().create()
 
+    private val type = object : TypeToken<Model<T>>() {}.type
+
     private val file: File
-    private var configuration = mutableListOf<E>()
+
+    private lateinit var configuration: Model<T>
 
     override fun create() {
-        configuration = mutableListOf()
+        configuration = Model(mutableListOf())
         save()
     }
 
     override fun load() {
         val reader = FileReader(file)
-        configuration = gson.fromJson(reader, configuration::class.java)
+        configuration = gson.fromJson(reader, type)
         reader.close()
     }
 
@@ -50,18 +55,16 @@ open class JsonConfigurationCollection<E>: ConfigurationCollection<E> {
         load()
     }
 
-    override fun find(): Collection<Configuration<E>> {
-        return configuration.map { Configuration(it) }
-    }
+    override fun find(): List<T> = configuration.model
 
-    override fun find(key: String, value: Any): Collection<Configuration<E>> {
-        val elements = mutableListOf<Configuration<E>>()
+    override fun find(key: String, value: Any): List<T> {
+        val elements = mutableListOf<T>()
 
-        configuration.forEach { element ->
-            element!!::class.java.declaredFields.forEach { field ->
+        configuration.model.forEach { type ->
+            type!!::class.java.declaredFields.forEach { field ->
                 field.isAccessible = true
-                if (field.name == key && field.get(element) == value) {
-                    elements.add(Configuration(element))
+                if (field.name == key && field.get(type) == value) {
+                    elements.add(type)
                 }
             }
         }
@@ -69,23 +72,24 @@ open class JsonConfigurationCollection<E>: ConfigurationCollection<E> {
         return elements
     }
 
-    override fun insert(obj: E): E {
-        configuration.add(obj)
+    override fun insert(obj: T): T {
+        configuration.model.add(obj)
         save()
         return obj
     }
 
-    override fun delete(obj: E): E {
-        configuration.remove(obj)
+    override fun delete(obj: T): T {
+        configuration.model.remove(obj)
         save()
         return obj
     }
 
-    override fun replace(old: E, new: E): E {
-        if (configuration.contains(old)) {
-            configuration.add(configuration.indexOf(old), new)
-            configuration.removeAt(configuration.indexOf(old) + 1)
+    override fun replace(old: T, new: T): T {
+        if (configuration.model.contains(old)) {
+            configuration.model.add(configuration.model.indexOf(old), new)
+            configuration.model.removeAt(configuration.model.indexOf(old) + 1)
         }
+        save()
         return new
     }
 }
